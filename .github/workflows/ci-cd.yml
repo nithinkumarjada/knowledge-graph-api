@@ -70,7 +70,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-asyncio
     
     - name: Run tests
       env:
@@ -78,6 +77,7 @@ jobs:
         NEO4J_USER: neo4j
         NEO4J_PASSWORD: password
         DATABASE_URL: postgresql://postgres:password@localhost:5432/knowledge_graph_audit
+        PYTHONPATH: ${{ github.workspace }}
       run: |
         pytest tests/ -vv --tb=short
     
@@ -105,7 +105,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
     
     - name: Build and push
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: true
