@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knowledge-graph-api
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: knowledge-graph-api
+  template:
+    metadata:
+      labels:
+        app: knowledge-graph-api
+    spec:
+      containers:
+      - name: api
+        image: your-docker-hub/knowledge-graph-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: NEO4J_URI
+          valueFrom:
+            configMapKeyRef:
+              name: knowledge-graph-config
+              key: neo4j-uri
+        - name: NEO4J_USER
+          valueFrom:
+            secretKeyRef:
+              name: knowledge-graph-secrets
+              key: neo4j-user
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: knowledge-graph-secrets
+              key: neo4j-password
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: knowledge-graph-secrets
+              key: database-url
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: knowledge-graph-secrets
+              key: secret-key
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: knowledge-graph-api-service
+spec:
+  selector:
+    app: knowledge-graph-api
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
